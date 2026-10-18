@@ -1,0 +1,301 @@
+{\rtf1\ansi\ansicpg1252\deff0\nouicompat\deflang1033{\fonttbl{\f0\fnil\fcharset0 Calibri;}}
+{\*\generator Riched20 10.0.19041}\viewkind4\uc1 
+\pard\sa200\sl276\slmult1\f0\fs22\lang10 <!DOCTYPE html>\par
+<html lang="es">\par
+<head>\par
+  <meta charset="UTF-8">\par
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">\par
+  <title>Para Ti</title>\par
+  <style>\par
+    * \{\par
+      box-sizing: border-box;\par
+      margin: 0;\par
+      padding: 0;\par
+      user-select: none;\par
+    \}\par
+\par
+    body, html \{\par
+      width: 100%;\par
+      height: 100%;\par
+      overflow: hidden;\par
+      background-color: #030508;\par
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;\par
+      color: #fff;\par
+    \}\par
+\par
+    #canvas-container \{\par
+      position: absolute;\par
+      top: 0;\par
+      left: 0;\par
+      width: 100%;\par
+      height: 100%;\par
+      z-index: 1;\par
+    \}\par
+\par
+    canvas \{\par
+      display: block;\par
+      width: 100%;\par
+      height: 100%;\par
+    \}\par
+\par
+    .text-overlay \{\par
+      position: absolute;\par
+      top: 38%;\par
+      left: 50%;\par
+      transform: translate(-50%, -50%);\par
+      z-index: 2;\par
+      text-align: center;\par
+      pointer-events: none;\par
+      width: 90%;\par
+      max-width: 500px;\par
+    \}\par
+\par
+    .custom-name \{\par
+      font-size: 2.8rem;\par
+      font-weight: 800;\par
+      text-transform: uppercase;\par
+      letter-spacing: 3px;\par
+      margin-bottom: 8px;\par
+      color: #ffffff;\par
+      text-shadow: \par
+        0 0 10px #3b82f6,\par
+        0 0 20px #3b82f6,\par
+        0 0 30px #60a5fa,\par
+        0 0 40px #3b82f6;\par
+      word-wrap: break-word;\par
+    \}\par
+\par
+    .custom-message \{\par
+      font-size: 1.1rem;\par
+      font-weight: 300;\par
+      letter-spacing: 1.5px;\par
+      opacity: 0.9;\par
+      color: #f8fafc;\par
+      text-shadow: \par
+        0 0 8px #3b82f6,\par
+        0 0 15px #60a5fa;\par
+      word-wrap: break-word;\par
+    \}\par
+  </style>\par
+</head>\par
+<body>\par
+\par
+  <div id="canvas-container">\par
+    <canvas id="heartCanvas"></canvas>\par
+  </div>\par
+\par
+  <div class="text-overlay">\par
+    <div class="custom-name">MAR\'cdA</div>\par
+    <div class="custom-message">Para siempre en mi coraz\'f3n</div>\par
+  </div>\par
+\par
+  <script>\par
+    const canvas = document.getElementById('heartCanvas');\par
+    const ctx = canvas.getContext('2d');\par
+\par
+    let width, height;\par
+    function resize() \{\par
+      width = canvas.width = window.innerWidth;\par
+      height = canvas.height = window.innerHeight;\par
+    \}\par
+    window.addEventListener('resize', resize);\par
+    resize();\par
+\par
+    const SHADES = ["#3b82f6", "#60a5fa", "#93c5fd", "#2563eb", "#bfdbfe", "#1d4ed8"];\par
+    const BASE_COLOR = "#3b82f6";\par
+\par
+    function getHeartPosition(t, scale) \{\par
+      const x = 16 * Math.pow(Math.sin(t), 3);\par
+      const y = -(13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t));\par
+      return \{ x: x * scale, y: y * scale \};\par
+    \}\par
+\par
+    const floatParticles = [];\par
+    const burstParticles = [];\par
+    const FLOAT_COUNT = 220;\par
+\par
+    class Particle \{\par
+      constructor(type, targetX = 0, targetY = 0) \{\par
+        this.type = type;\par
+        this.reset(targetX, targetY);\par
+      \}\par
+\par
+      reset(targetX = 0, targetY = 0) \{\par
+        if (this.type === 'float') \{\par
+          const t = Math.random() * Math.PI * 2;\par
+          const scale = Math.min(width, height) / 45; \par
+          const heartPos = getHeartPosition(t, scale);\par
+\par
+          this.targetX = width / 2 + heartPos.x + (Math.random() - 0.5) * 20;\par
+          this.targetY = height * 0.38 + heartPos.y + (Math.random() - 0.5) * 20;\par
+\par
+          this.x = width / 2 + (Math.random() - 0.5) * 160;\par
+          this.y = height * 0.88 + (Math.random() - 0.5) * 30;\par
+\par
+          this.vx = (Math.random() - 0.5) * 1.5;\par
+          this.vy = - (Math.random() * 2.5 + 1.5);\par
+          \par
+          this.size = Math.random() * 2.5 + 1;\par
+          this.maxLife = Math.random() * 120 + 80;\par
+          this.life = 0;\par
+          this.color = SHADES[Math.floor(Math.random() * SHADES.length)];\par
+          this.alpha = 0;\par
+          this.drift = (Math.random() - 0.5) * 0.05;\par
+        \} else if (this.type === 'burst') \{\par
+          this.x = targetX;\par
+          this.y = targetY;\par
+          const angle = Math.random() * Math.PI * 2;\par
+          const speed = Math.random() * 6 + 1;\par
+          this.vx = Math.cos(angle) * speed;\par
+          this.vy = Math.sin(angle) * speed;\par
+          this.size = Math.random() * 3 + 1.5;\par
+          this.maxLife = Math.random() * 40 + 20;\par
+          this.life = 0;\par
+          this.color = SHADES[Math.floor(Math.random() * SHADES.length)];\par
+          this.alpha = 1;\par
+          this.gravity = 0.08;\par
+        \}\par
+      \}\par
+\par
+      update() \{\par
+        this.life++;\par
+\par
+        if (this.type === 'float') \{\par
+          const dx = this.targetX - this.x;\par
+          const dy = this.targetY - this.y;\par
+\par
+          this.vx += dx * 0.0003 + this.drift;\par
+          this.vy += dy * 0.0003;\par
+\par
+          this.vx *= 0.98;\par
+          this.vy *= 0.98;\par
+\par
+          this.x += this.vx;\par
+          this.y += this.vy;\par
+\par
+          const progress = this.life / this.maxLife;\par
+          if (progress < 0.2) \{\par
+            this.alpha = progress / 0.2;\par
+          \} else if (progress > 0.7) \{\par
+            this.alpha = (1 - progress) / 0.3;\par
+          \} else \{\par
+            this.alpha = 1;\par
+          \}\par
+\par
+          if (this.life >= this.maxLife) \{\par
+            this.reset();\par
+          \}\par
+        \} else if (this.type === 'burst') \{\par
+          this.vy += this.gravity;\par
+          this.x += this.vx;\par
+          this.y += this.vy;\par
+          this.alpha = 1 - (this.life / this.maxLife);\par
+\par
+          if (this.life >= this.maxLife) \{\par
+            return false;\par
+          \}\par
+        \}\par
+        return true;\par
+      \}\par
+\par
+      draw() \{\par
+        ctx.save();\par
+        ctx.globalAlpha = Math.max(0, Math.min(1, this.alpha));\par
+        ctx.shadowBlur = 12;\par
+        ctx.shadowColor = this.color;\par
+        ctx.fillStyle = this.color;\par
+        \par
+        ctx.beginPath();\par
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);\par
+        ctx.fill();\par
+        ctx.restore();\par
+      \}\par
+    \}\par
+\par
+    for (let i = 0; i < FLOAT_COUNT; i++) \{\par
+      const p = new Particle('float');\par
+      p.life = Math.random() * p.maxLife;\par
+      floatParticles.push(p);\par
+    \}\par
+\par
+    function spawnHeartBurst(x, y) \{\par
+      const count = 70;\par
+      for (let i = 0; i < count; i++) \{\par
+        burstParticles.push(new Particle('burst', x, y));\par
+      \}\par
+    \}\par
+\par
+    function drawBasePortal() \{\par
+      const centerX = width / 2;\par
+      const centerY = height * 0.88;\par
+\par
+      ctx.save();\par
+      \par
+      const outerGlow = ctx.createRadialGradient(\par
+        centerX, centerY, 10,\par
+        centerX, centerY, 180\par
+      );\par
+      outerGlow.addColorStop(0, BASE_COLOR);\par
+      outerGlow.addColorStop(0.4, 'rgba(59, 130, 246, 0.4)');\par
+      outerGlow.addColorStop(1, 'rgba(3, 5, 8, 0)');\par
+\par
+      ctx.fillStyle = outerGlow;\par
+      ctx.beginPath();\par
+      ctx.ellipse(centerX, centerY, 220, 60, 0, 0, Math.PI * 2);\par
+      ctx.fill();\par
+\par
+      const coreGlow = ctx.createRadialGradient(\par
+        centerX, centerY, 0,\par
+        centerX, centerY, 70\par
+      );\par
+      coreGlow.addColorStop(0, '#ffffff');\par
+      coreGlow.addColorStop(0.3, BASE_COLOR);\par
+      coreGlow.addColorStop(1, 'transparent');\par
+\par
+      ctx.fillStyle = coreGlow;\par
+      ctx.beginPath();\par
+      ctx.ellipse(centerX, centerY, 100, 25, 0, 0, Math.PI * 2);\par
+      ctx.fill();\par
+\par
+      ctx.restore();\par
+    \}\par
+\par
+    function animate() \{\par
+      ctx.fillStyle = 'rgba(3, 5, 8, 0.25)';\par
+      ctx.fillRect(0, 0, width, height);\par
+\par
+      drawBasePortal();\par
+\par
+      floatParticles.forEach(p => \{\par
+        p.update();\par
+        p.draw();\par
+      \});\par
+\par
+      for (let i = burstParticles.length - 1; i >= 0; i--) \{\par
+        const active = burstParticles[i].update();\par
+        if (active) \{\par
+          burstParticles[i].draw();\par
+        \} else \{\par
+          burstParticles.splice(i, 1);\par
+        \}\par
+      \}\par
+\par
+      requestAnimationFrame(animate);\par
+    \}\par
+\par
+    animate();\par
+\par
+    window.addEventListener('click', (e) => \{\par
+      spawnHeartBurst(e.clientX, e.clientY);\par
+    \});\par
+\par
+    window.addEventListener('touchstart', (e) => \{\par
+      if (e.touches.length > 0) \{\par
+        spawnHeartBurst(e.touches[0].clientX, e.touches[0].clientY);\par
+      \}\par
+    \}, \{ passive: true \});\par
+  </script>\par
+</body>\par
+</html>\par
+}
+ 
